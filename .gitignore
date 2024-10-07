@@ -1,0 +1,4 @@
+/vendor
+/_CONFIG/config.php
+error.log
+composer.phar

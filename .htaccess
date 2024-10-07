@@ -1,0 +1,15 @@
+Options -Indexes
+SetEnv TZ America/Manaus
+
+php_value memory_limit 128M
+
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)([^/])$        /$1$2/ [L,R=308]
+RewriteCond %{REQUEST_URI} !^/assets/
+RewriteCond %{REQUEST_URI} !^/index.php
+RewriteCond %{REQUEST_URI} !^/robots.txt
+RewriteCond %{REQUEST_URI} !^/favicon.svg
+RewriteRule ^ /index.php [L]
+
