@@ -1,9 +1,27 @@
 <?php
+session_start();
+var_dump($_SESSION);
+use MercadoPago\Exceptions\MPApiException;use MercadoPago\Net\MPSearchRequest;
 
 
+$result = [];
+
+$havePlan = false;
+if (!empty($_SESSION["UserMPID"])) try {
+	$PAC = new MercadoPago\Client\PreApproval\PreApprovalClient();
+	$search = new MPSearchRequest(100, 0, [
+		"payer_id"            => $_SESSION["UserMPID"],
+		"status"              => "authorized",
+		"preapproval_plan_id" => "2c9380849250c843019258f4d28402c2",
+	]);
+	$result = $PAC->search($search)->results;
+	$havePlan = $result;
+} catch (MPApiException|Exception|Throwable $e) {
+	$havePlan = false;
+}
 
 ?><!doctype html>
-<html lang="en">
+<html lang="br" data-bs-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,7 +35,7 @@
         }
     </style>
 </head>
-<body data-bs-theme="dark">
+<body>
 
 <nav class="navbar navbar-expand-md bg-body-tertiary">
     <div class="container-fluid">
@@ -31,22 +49,14 @@
                     <a class="nav-link active" aria-current="page" href="#">Inicio</a>
                 </li>
 
-				<?php
-
-				if (isset($_SESSION["UserID"])) {
-
-					?>
+				<?php if (isset($_SESSION["UserID"])) { ?>
 
                     <li class="nav-item">
                         <a class="nav-link" href="/sair/">Sair</a>
                     </li>
 
 
-					<?php
-
-
-				} else {
-					?>
+				<?php } else { ?>
 
                     <li class="nav-item">
                         <button class="nav-link" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
@@ -55,33 +65,58 @@
                         <button class="nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
                     </li>
 
-					<?php
-
-
-				}
-
-				?>
+				<?php } ?>
             </ul>
         </div>
     </div>
 </nav>
 
 <div class="main">
-    <div class="rounded-3 container">
-        <h1>O Sodalicio</h1>
-        <div class="row">
-            <div class="col-6">
-                <div>Plano Anual Digital</div>
-                <button class="btn btn-sm btn-success" onclick="comprar('digital')">Comprar R$ 14,99 por mês</button>
-            </div>
-            <div class="col-6">
-                <div>Plano Anual Físico</div>
-                <button class="btn btn-sm btn-success" onclick="comprar('fisico')">Comprar R$ 24,99 por mês</button>
+    <div class="rounded-3 container mt-3">
+        <h1 class="text-center">O Sodalício</h1>
+		<?php
+		if (!$havePlan) {
+			?>
+            <div class="row justify-content-evenly row-cols-auto">
+                <div class="col">
+                    <div>Plano Anual Digital</div>
+                    <button class="btn btn-sm btn-success" onclick="comprar('digital')">Comprar R$ 14,99 por mês</button>
+                </div>
+                <div class="col">
+                    <div>Plano Anual Físico</div>
+                    <button class="btn btn-sm btn-success" onclick="comprar('fisico')">Comprar R$ 24,99 por mês</button>
 
+                </div>
             </div>
+
+			<?php
+		}
+		?>
+        <hr class="my-5">
+        <h3 class="text-center">Últimos Jornais</h3>
+        <div class="">
+
+			<?php
+			$c = con();
+			$a = $c->prepare("SELECT * FROM news WHERE dataPostagem < NOW()");
+			$a->execute([]);
+			if ($a->rowCount()) {
+				$news = $a->fetchAll(2);
+				foreach ($news as $new) {
+					?>
+                    <div class="card card-body">
+                        <h5 class="text-center"><?= $new["titulo"] ?></h5>
+                        <p><?= $new["resumo"] ?></p>
+                        <a href="/newspaper/<?= $new["uid"] ?>/" class="btn btn-sm btn-success">Ver</a>
+                    </div>
+
+					<?php
+				}
+
+			}
+			?>
+
         </div>
-
-
     </div>
 </div>
 
@@ -90,15 +125,14 @@
 <div class="modal fade" id="pagamento" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-xxl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Pagamento</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-0">
 
 
                 <div id="cardPaymentBrick_container"></div>
-
             </div>
         </div>
     </div>
@@ -107,16 +141,10 @@
 <?php
 
 include ROOT . "/_COMPONENTS/modal_login.php";
+include ROOT . "/_COMPONENTS/modal_endereco.php";
+include ROOT . "/_COMPONENTS/essencial/scripts.php";
 
 ?>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-
-
-<script src="https://sdk.mercadopago.com/js/v2"></script>
-
-<script src="/assets/js/main.js"></script>
 <script>
     const mp = new MercadoPago("<?=PUBLIC_KEY?>", {
         locale: 'pt-BR',
@@ -142,10 +170,7 @@ include ROOT . "/_COMPONENTS/modal_login.php";
                 payer: {
                     email: "<?= $_SESSION["UserEmail"]?>",
                 },
-                identification: {
-                    type: '',
-                    number: '',
-                },
+                //    identification: {type: '', number: '',},
             },
             customization: {
                 visual: {
@@ -223,36 +248,85 @@ include ROOT . "/_COMPONENTS/modal_login.php";
             },
             callbacks: {
                 onReady: () => {
-                    // callback chamado quando o Brick estiver pronto
+
                 },
                 onSubmit: (cardFormData) => {
+                    console.log(cardFormData);
+                    cardFormData["plano"] = plano;
+                    let l = new Loader();
+                    $.ajax({
+                        url: "/API/payments/create/",
+                        data: cardFormData,
+                        dataType: "json",
+                        method: "post",
+                        beforeSend: () => {
+                            l.start("Enviando");
+                            $("#pagamento").modal("hide");
+                            window.cardPaymentBrickController.unmount();
+                        },
+                        success: (d) => {
+                            if (d.status === 200) {
+                                l.finish({
+                                    message: d.msg,
+                                    icon: "success",
+                                    autoSkip: 3,
+                                    callback: () => {
+                                        console.log(d);
+                                        if (d.account) {
+                                            $("#cepModal").data("account", d.account).modal("show");
+                                            if (plano !== "fisico") {
+                                                $("#cepModal").find(".ceparea").html("");
+                                            }
+                                        }
+                                    }
+                                });
+                            } else {
+                                l.finish({
+                                    message: d.msg,
+                                    icon: 3,
+                                    autoSkip: false,
+                                    callback: () => {
+                                    }
+                                });
+                            }
+                        },
+                        error: (d) => {
+                            let msg = "Falha ao enviar...";
+                            console.log(d);
+                            if (d["responseJSON"] && d["responseJSON"]["msg"]) {
+                                msg = d["responseJSON"]["msg"];
+                            }
+                            l.finish({
+                                message: msg,
+                                icon: 2,
+                            })
+                        },
+                        complete: () => {
 
-                    return new Promise((resolve, reject) => {
-                        fetch("/api/payments/create/", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(cardFormData)
-                        })
-                            .then((response) => {
-                                console.log(response)
-                                resolve(true);
-                            })
-                            .catch((error) => {
-                                console.log(error)
-                                // lidar com a resposta de erro ao tentar criar o pagamento
-                                reject();
-                            })
-                    });
+                        }
+                    })
+                    return true;
                 },
                 onError: (error) => {
+
+                    l.finish({
+                        message: "Houve um erro no MercadoPago, tente novamente...",
+                        icon: "error",
+                        autoSkip: false,
+                        callback: () => {
+                            window.refresh();
+
+                        }
+                    });
                     // callback chamado para todos os casos de erro do Brick
                 },
             },
         });
     }
 
+    $("#pagamento").on("hide.bs.modal", () => {
+        window.cardPaymentBrickController.unmount();
+    })
 
 </script>
 

@@ -9,13 +9,12 @@
     }
   ],
   "require": {
-    "robmorgan/phinx": "^0.16.0",
-    "mercadopago/dx-php": "3.0.8"
+    "mercadopago/dx-php": "3.0.8",
+    "phpmailer/phpmailer": "^v6.9.2"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"
-  },
-  "scripts": {
-    "post-update-cmd": "vendor/bin/phinx migrate"
   }
+
+
 }

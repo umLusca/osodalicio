@@ -1,4 +1,5 @@
 /vendor
-/_CONFIG/config.php
+
+/_CONFIG/local.env.php
 error.log
 composer.phar

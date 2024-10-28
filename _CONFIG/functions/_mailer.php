@@ -1,123 +1,52 @@
 <?php
 
 use PHPMailer\PHPMailer\PHPMailer;
-use SendGrid\Mail\Mail;
-use SendGrid\Mail\Personalization;
-use SendGrid\Mail\To;
-use SendGrid\Mail\TypeException;
 
 
 
-function sendDynamic($ass,$emailid,$recipients,&$response = null){
-    //Bem-vindo = d-79166e125f244201ac994810cdb83e85;
-    //disparo = d-07aaf9920ed84195a1a63b46d221e98e
-
-    $response = [];
-    $email = new Mail();
-    try {
-        $sendgrid = new SendGrid($_ENV['SendGridAPI']);
-
-        $email->setFrom('no-reply@datalyte.app', 'Datalyte Informa');
-        $email->setSubject($ass);
-        $email->setTemplateId($emailid);
-
-    } catch (Exception $e){
-        $response['retorno'] = $e;
-        return false;
-    }
-    $falhas = [];
-/*
-    $recipients = [
-        ['email' => 'example1@test.com', 'name' => 'Recipient 1', 'data' => ['first_name' => 'Alice', 'city' => 'Boston']],
-        ['email' => 'example2@test.com', 'name' => 'Recipient 2', 'data' => ['first_name' => 'Bob', 'city' => 'Chicago']]
-    ];
+function sendMail($para, $assunto, $mensagem): true|string
 {
-    'title': 'Campanha Mário Heinz',
-    'body': 'Com a gente, você se mantém informado da nossa política de verdade',
-    'unsub': 'https://datalyte.app/unsub/asdasd/asdasdasd/',
-    'unlink': 'https://datalyte.app/unlink/asdasd/asdasdasd/'
-}
+	global $_CONFIG;
+	$mail = new PHPMailer(true);
+	try {
+		// Configurações do servidor SMTP
+		$mail->isSMTP();
+		$mail->Host = 'mail.osodalicio.com.br'; // Endereço do servidor SMTP
+		$mail->SMTPAuth = true;
+		$mail->Username = 'no-reply@osodalicio.com.br';                  // Usuário do SMTP
+		$mail->Password = SMTP_PASSWORD;             // Senha do SMTP
+		$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Criptografia (TLS ou SSL)
+		$mail->Port = 465;                                  // Porta do SMTP (587 para TLS)
 
-{
 
-    'first_name': 'Usuário',
-    'last_name': '',
-    'email': 'você',
-    'ajudaURL': 'https://datalyte.app/ajuda',
-    'termosURL': 'https://datalyte.app/termos',
-    'privacidadeURL': 'https://datalyte.app/termos',
-    'unlink': '',
-    'unsub': ''
-    }
-*/
-    foreach ($recipients as $recipient) {
-        $personalization = new Personalization();
-        $personalization->setSubject($ass);
-        $personalization->addTo(new To($recipient['email'], $recipient['name']));
-        foreach ($recipient['data'] as $key => $value) {
-            $personalization->addDynamicTemplateData($key, $value);
-        }
-        $email->addPersonalization($personalization);
-    }
 
-    $response = ['falhas' => $falhas];
+		$mail->setFrom("no-reply@osodalicio.com.br", 'O Sodalício');
+		$mail->FromName = mb_convert_encoding("Suporte", 'ISO-8859-1', 'UTF-8'); // Seu nome
+		$mail->addAddress($para);
 
-    try {
-        $response['retorno'] = $sendgrid->send($email);
-        if ($response['retorno']->statusCode() === 202) {
-            return true;
-        }
-    } catch (Exception $e) {
-        $response['retorno'] = $e;
-    }
-    return false;
+		$mail->isHTML(true); // Definir e-mail como HTML
+		$mail->Subject = mb_convert_encoding($assunto, 'ISO-8859-1', 'UTF-8');
+		$mail->Body = mb_convert_encoding($mensagem, 'ISO-8859-1', 'UTF-8');
+		//$mail->AltBody = strip_tags($mensagem); // Corpo alternativo para leitores sem suporte a HTML
 
-}
-function sendEmail($ass, $msg, array $to,&$response = null): bool
-{
-    $response = [];
-    $email = new Mail();
-    try {
+		// Enviar e-mail
+		if ($mail->send()) {
 
-        $email->setFrom('no-reply@datalyte.app', 'Datalyte');
-        $email->setSubject($ass);
+			return true;
+		} else {
+			return $mail->ErrorInfo;
+		}
 
-        $email->addContent('text/html', $msg);
-        $sendgrid = new SendGrid($_ENV['SendGridAPI']);
-    } catch (Exception $e){
-        $response['retorno'] = $e;
-        return false;
-    }
-    $falhas = [];
+	} catch (Exception $e) {
 
-    foreach ($to as $recipient) {
-        $personalization = new Personalization();
-        try {
-            $personalization->addTo(new To($recipient));
-            $email->addPersonalization($personalization);
-        } catch (Exception $e) {
-            $falhas[] = ["email"=>$recipient,"mot"=>$e->getMessage()];
-        }
-    }
-
-    $response = ["falhas" => $falhas];
-
-    try {
-        $response["retorno"] = $sendgrid->send($email);
-        if ($response['retorno']->statusCode() === 202) {
-            return true;
-        }
-    } catch (Exception $e) {
-        $response["retorno"] = $e;
-    }
-
-    return false;
+		return $e;
+	}
 }
 
 
 function emailHTML($title, $text, $linktext, $link)
 {
-    return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+	return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
   <head>
     <!-- Compiled with Bootstrap Email version: 1.4.0 --><meta http-equiv="x-ua-compatible" content="ie=edge">

@@ -12,7 +12,7 @@
 					</div>
 					<div>
 						<label class="w-100 form-floating">
-							<input class="form-control" placeholder="Login" name="login" type="text" maxlength="255" required/>
+							<input class="form-control" placeholder="Login" name="email" type="email" maxlength="255" required/>
 							<label>Email</label>
 						</label>
 					</div>
@@ -36,7 +36,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Fazer Login</h1>
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Registrar-se</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -48,6 +48,12 @@
                         <label class="w-100 form-floating">
                             <input class="form-control" placeholder="Nome" name="name" type="text" maxlength="100" required/>
                             <label>Nome</label>
+                        </label>
+                    </div>
+                    <div>
+                        <label class="w-100 form-floating">
+                            <input class="form-control inputTel" placeholder="Telefone" minlength="14" maxlength="15" type="text" inputmode="tel" name="telefone" required/>
+                            <label>Telefone</label>
                         </label>
                     </div>
                     <div>
